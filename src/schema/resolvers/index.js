@@ -12,7 +12,7 @@ const folders = require('../../functions/folder')
 const files = require('../../functions/file')
 
 const getFolderSize = require('../../utils/getFolderSize')
-
+const mongoDB = require('../../mongo-operations/index')
 const resolvers = {
 	FolderOrFile: {
 		__resolveType: obj => {
@@ -136,6 +136,7 @@ const resolvers = {
 			return files
 				.createFile(args.path, args.type)
 				.then(async response => {
+					mongoDB.createNewFile(args.path, args.type)
 					await git.add({
 						dir: 'filesystem',
 						filepath: args.path
