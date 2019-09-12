@@ -85,14 +85,14 @@ const deleteFolder = givenPath =>
 		console.log('err', err)
 	})
 
-const renameFolder = async (oldPath, newPath) => {
+const renameFolder = (oldPath, newPath) => {
 	return new Promise((resolve, reject) => {
 		fs.rename(oldPath, newPath, function(err) {
 			if (err) {
 				return reject(err)
 			}
+			return resolve('Folder has been renamed successfully!')
 		})
-		resolve('Folder has been renamed successfully!')
 	})
 }
 

@@ -105,17 +105,27 @@ const resolvers = {
 		},
 		deleteFolder: async (_, args) => {
 			if (fs.existsSync(args.path)) {
-				folders.deleteFolder(args.path)
-				return 'Folder deleted successfully!'
+				return await files
+					.getAllFilesWithInFolder(args.path)
+					.then(files => {
+						console.log(files)
+						folders.deleteFolder(args.path)
+						return 'Folder deleted successfully!'
+					})
 			}
 			return new Error('ENOENT')
 		},
 		renameFolder: async (_, args) => {
 			if (fs.existsSync(args.oldPath)) {
-				return folders
-					.renameFolder(args.oldPath, args.newPath)
-					.then(sucess => sucess)
-					.catch(failure => failure)
+				return await files
+					.getAllFilesWithInFolder(args.oldPath)
+					.then(files => {
+						console.log(files)
+						return folders
+							.renameFolder(args.oldPath, args.newPath)
+							.then(sucess => sucess)
+							.catch(failure => failure)
+					})
 			}
 			return new Error('ENOENT')
 		},
