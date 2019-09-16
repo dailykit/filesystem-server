@@ -37,7 +37,9 @@
     "dev": "nodemon --exec babel-node src/index.js",
     "clean": "rm -rf build && mkdir build",
     "build-server": "babel --ignore node_modules -d ./build ./src -s",
-    "build": "npm run clean && npm run build-server"
+    "build": "babel src/index.js -d dist",
+    "start": "npm run build && node src/index.js"
+
   },
   "author": "",
   "license": "ISC",
