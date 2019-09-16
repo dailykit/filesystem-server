@@ -136,7 +136,12 @@ const resolvers = {
 			return files
 				.createFile(args.path, args.type)
 				.then(async response => {
-					mongoDB.createNewFile(args.path, args.type)
+					console.log(response)
+
+					files.getFile(args.path).then(data => {
+						console.log(data)
+						mongoDB.createNewFile(args.path, args.type, data.content);
+					})
 					await git.add({
 						dir: 'filesystem',
 						filepath: args.path
