@@ -1,0 +1,27 @@
+services: 
+  server: 
+    build: 
+      context: ./
+      dockerfile: Dockerfile
+    command: npm start
+    container_name: back_end
+    ports: 
+      - "4000:4000"
+    volumes:
+      - type: volume
+        source: filesystem
+        target: /filesystem
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo
+    ports: 
+      - "27017:27017"
+    volumes:
+      - data-volume:/data/db
+  
+volumes:
+  filesystem:
+  data-volume:
+version: "3.3"

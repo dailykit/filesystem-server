@@ -1,14 +1,16 @@
 var MongoClient = require('mongodb').MongoClient;
-var url = "mongodb://localhost:27017/";
+var url = "mongodb://mongodb:27017/";
+// second mongodb refers to the docker service running
 
 function createNewFile(filepath, collectionName, data) {
   console.log(filepath, collectionName)
+  console.log(url)
   MongoClient.connect(url, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   }, function (err, db) {
     if (err) throw err;
-    var dbo = db.db("Filesystem");
+    var dbo = db.db(collectionName);
     let insertObject = {
       path : filepath,
       data : data
