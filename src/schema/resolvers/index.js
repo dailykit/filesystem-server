@@ -8,8 +8,6 @@ git.plugins.set('fs', fs)
 const folders = require('../../functions/folder')
 const files = require('../../functions/file')
 
-const baseFolder = './../apps'
-
 const getFolderSize = require('../../utils/getFolderSize')
 const resolvers = {
 	FolderOrFile: {
@@ -92,24 +90,37 @@ const resolvers = {
 	},
 	Mutation: {
 		installApp: async (_, args) => {
-			const path = `./../apps/${args.name}`
-			const paths = [path, `${path}/data`, `${path}/schema`]
+			const appPath = `./../apps/${args.name}`
+			const paths = [appPath, `${appPath}/data`, `${appPath}/schema`]
 			const { schemas } = JSON.parse(args.schemas)
 
+			// Adsd Schema, Data Folder Paths
 			await schemas.map(folder => {
-				paths.push(`${path}/schema/${folder.path}`)
-				paths.push(`${path}/data/${folder.path}`)
+				paths.push(`${appPath}/schema/${folder.path}`)
+				paths.push(`${appPath}/data/${folder.path}`)
 			})
-			await paths.map(path => folders.createFolder(path))
-			await schemas.map(folder => {
-				return folder.entities.map(file =>
-					fs.writeFileSync(
-						`${path}/schema/${folder.path}/${file.name}.json`,
-						JSON.stringify(file.content, null, 2)
+
+			// Create Folders with Schema Entity Files
+			await paths.map(path =>
+				folders.createFolder(path).then(() =>
+					schemas.map(folder =>
+						folder.entities.map(file => {
+							const folderPath = `${appPath}/schema/${folder.path}`
+							const filepath = `${folderPath}/${file.name}.json`
+							if (fs.existsSync(folderPath)) {
+								return fs.writeFile(
+									filepath,
+									JSON.stringify(file.content, null, 2),
+									err => {
+										if (err) return console.log(err)
+										return 'App installed!'
+									}
+								)
+							}
+						})
 					)
 				)
-			})
-			return 'App installed!'
+			)
 		},
 		createFolder: (_, args) => {
 			if (fs.existsSync(args.path)) {
