@@ -9,6 +9,7 @@ const mutations = gql`
 		deleteFile(path: String): String
 		updateFile(path: String!, data: String!, commitMessage: String!): String
 		renameFile(oldPath: String!, newPath: String!): String
+		installApp(name: String!, schemas: String): String
 	}
 `
 

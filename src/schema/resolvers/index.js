@@ -8,6 +8,8 @@ git.plugins.set('fs', fs)
 const folders = require('../../functions/folder')
 const files = require('../../functions/file')
 
+const baseFolder = './../apps'
+
 const getFolderSize = require('../../utils/getFolderSize')
 const resolvers = {
 	FolderOrFile: {
@@ -74,7 +76,7 @@ const resolvers = {
 				.catch(e => e),
 		getCommitLog: async () => {
 			const log = await git.log({
-				dir: 'filesystem',
+				dir: baseFolder,
 				depth: 10,
 				ref: 'master',
 			})
@@ -82,13 +84,33 @@ const resolvers = {
 		},
 		getCommit: async (_, { id }) => {
 			let { object: commit } = await git.readObject({
-				dir: 'filesystem',
+				dir: baseFolder,
 				oid: id,
 			})
 			return commit
 		},
 	},
 	Mutation: {
+		installApp: async (_, args) => {
+			const path = `./../apps/${args.name}`
+			const paths = [path, `${path}/data`, `${path}/schema`]
+			const { schemas } = JSON.parse(args.schemas)
+
+			await schemas.map(folder => {
+				paths.push(`${path}/schema/${folder.path}`)
+				paths.push(`${path}/data/${folder.path}`)
+			})
+			await paths.map(path => folders.createFolder(path))
+			await schemas.map(folder => {
+				return folder.entities.map(file =>
+					fs.writeFileSync(
+						`${path}/schema/${folder.path}/${file.name}.json`,
+						JSON.stringify(file.content, null, 2)
+					)
+				)
+			})
+			return 'App installed!'
+		},
 		createFolder: (_, args) => {
 			if (fs.existsSync(args.path)) {
 				return 'Folder already exists!'
@@ -130,14 +152,14 @@ const resolvers = {
 				.createFile(args.path, args.type)
 				.then(async response => {
 					await git.add({
-						dir: 'filesystem',
+						dir: baseFolder,
 						filepath: args.path
 							.split('/')
 							.slice(2)
 							.join('/'),
 					})
 					await git.commit({
-						dir: 'filesystem',
+						dir: baseFolder,
 						// TODO: Add the current user's name & email
 						author: {
 							name: 'Marky Mark',
@@ -152,14 +174,14 @@ const resolvers = {
 		deleteFile: async (_, args) => {
 			if (fs.existsSync(args.path)) {
 				await git.remove({
-					dir: 'filesystem',
+					dir: baseFolder,
 					filepath: args.path
 						.split('/')
 						.slice(2)
 						.join('/'),
 				})
 				await git.commit({
-					dir: 'filesystem',
+					dir: baseFolder,
 					// TODO: Add the current user's name & email
 					author: {
 						name: 'Marky Mark',

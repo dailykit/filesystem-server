@@ -66,18 +66,18 @@ const getFolderWithFiles = async (url = './filesystem') => {
 }
 
 const createFolder = async url => {
-	fs.mkdir(
-		url,
-		{
-			recursive: true,
-		},
-		err => {
-			if (err) {
-				console.log(err)
+	return new Promise((resolve, reject) => {
+		fs.mkdir(
+			url,
+			{
+				recursive: true,
+			},
+			err => {
+				if (err) return reject(err)
+				return resolve('Folder created successfuly!')
 			}
-		}
-	)
-	return 'Folder created successfuly!'
+		)
+	})
 }
 
 const deleteFolder = givenPath =>
