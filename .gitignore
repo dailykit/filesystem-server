@@ -1,6 +1,2 @@
 node_modules/
-.prettierrc
-key.pem
-build
 debug.log
-filesystem/

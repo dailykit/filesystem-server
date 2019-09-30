@@ -1,9 +1,6 @@
 const path = require('path')
 const _ = require('lodash')
 const fs = require('fs')
-const os = require('os')
-const http = require('http')
-const io = require('socket.io')(http)
 
 const git = require('isomorphic-git')
 git.plugins.set('fs', fs)
@@ -12,7 +9,6 @@ const folders = require('../../functions/folder')
 const files = require('../../functions/file')
 
 const getFolderSize = require('../../utils/getFolderSize')
-const mongoDB = require('../../mongo-operations/index')
 const resolvers = {
 	FolderOrFile: {
 		__resolveType: obj => {
@@ -93,9 +89,6 @@ const resolvers = {
 		},
 	},
 	Mutation: {
-		addFileToSocketChannel: async (_, args) => {
-			await io.emit('OpenedFiles', 'Server', args.path)
-		},
 		createFolder: (_, args) => {
 			if (fs.existsSync(args.path)) {
 				return 'Folder already exists!'
@@ -136,12 +129,6 @@ const resolvers = {
 			return files
 				.createFile(args.path, args.type)
 				.then(async response => {
-					console.log(response)
-
-					files.getFile(args.path).then(data => {
-						console.log(data)
-						mongoDB.createNewFile(args.path, args.type, data.content);
-					})
 					await git.add({
 						dir: 'filesystem',
 						filepath: args.path

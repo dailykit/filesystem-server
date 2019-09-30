@@ -82,8 +82,7 @@ const createFolder = async url => {
 
 const deleteFolder = givenPath =>
 	rimraf(givenPath, err => {
-		if(err)
-		console.log('error', err)
+		if (err) return err
 	})
 
 const renameFolder = (oldPath, newPath) => {
