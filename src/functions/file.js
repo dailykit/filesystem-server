@@ -49,7 +49,7 @@ const searchFiles = async fileName => {
 		return path.basename(file) === '.git'
 	}
 	return new Promise((resolve, reject) => {
-		getFilesRecursively('./filesystem', [ignoreFunc], (err, files) => {
+		getFilesRecursively('./../apps', [ignoreFunc], (err, files) => {
 			if (err) return reject(new Error(err))
 			const formatted = files
 				.map(file => `./${file.split('\\').join('/')}`)

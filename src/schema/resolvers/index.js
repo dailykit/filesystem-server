@@ -112,8 +112,7 @@ const resolvers = {
 									filepath,
 									JSON.stringify(file.content, null, 2),
 									err => {
-										if (err) return console.log(err)
-										return 'App installed!'
+										if (err) return new Error(err)
 									}
 								)
 							}
@@ -121,6 +120,7 @@ const resolvers = {
 					)
 				)
 			)
+			return 'App installed!'
 		},
 		createFolder: (_, args) => {
 			if (fs.existsSync(args.path)) {

@@ -30,7 +30,7 @@ const getNestedFolders = async url => {
 	return Promise.all(nestedData).then(response => response)
 }
 
-const getFolderWithFiles = async (url = './filesystem') => {
+const getFolderWithFiles = async url => {
 	try {
 		let data = await fs.readdirSync(url)
 		let nestedData = data
