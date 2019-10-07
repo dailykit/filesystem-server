@@ -18,8 +18,13 @@ const getRelFilePath = givenPath =>
 
 const repoDir = givenPath => `${baseFolder}${getRepoPath(givenPath)}`
 
+const getAppName = givenPath => givenPath.split(baseFolder)[1].split('/')[0]
+const getRepoName = givenPath => givenPath.split('./../apps/')[1].split('/')[2]
+
 module.exports = {
 	getRelFilePath,
 	getRepoPath,
 	repoDir,
+	getAppName,
+	getRepoName,
 }

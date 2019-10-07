@@ -5,6 +5,8 @@ const getFilesRecursively = require('recursive-readdir')
 const git = require('isomorphic-git')
 git.plugins.set('fs', fs)
 
+const database = require('./database')
+
 const { getRelFilePath, repoDir } = require('../utils/parsePath')
 const { stageChanges } = require('./git')
 
@@ -24,22 +26,33 @@ const createFile = ({ path: givenPath, content }) => {
 			.catch(error => reject(new Error(error)))
 
 		// Commit the file
-		git.commit({
-			dir: repoDir(givenPath),
-			author: {
-				name: 'placeholder',
-				email: 'placeholder@example.com',
-			},
-			commiter: {
-				name: 'placeholder',
-				email: 'placeholder@example.com',
-			},
-			message: `Added: ${path.basename(givenPath)}`,
-		})
-			.then(sha => console.log({ sha }))
-			.catch(error => reject(new Error(error)))
+		return git
+			.commit({
+				dir: repoDir(givenPath),
+				author: {
+					name: 'placeholder',
+					email: 'placeholder@example.com',
+				},
+				commiter: {
+					name: 'placeholder',
+					email: 'placeholder@example.com',
+				},
+				message: `Added: ${path.basename(givenPath)}`,
+			})
+			.then(sha => {
+				const fields = {
+					name: path.basename(givenPath),
+					path: givenPath,
+					commits: [sha],
+				}
 
-		return resolve(`Added: ${path.basename(givenPath)}`)
+				// Add the file to db document
+				return database
+					.createDoc(fields)
+					.then(() => resolve(`Added: ${path.basename(givenPath)}`))
+					.catch(error => reject(new Error(error)))
+			})
+			.catch(error => reject(new Error(error)))
 	})
 }
 
