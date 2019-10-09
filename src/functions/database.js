@@ -10,6 +10,7 @@ const connectToDB = dbName => {
 		return mongoose
 			.connect(`mongodb://localhost:27017/${dbName}`, {
 				useNewUrlParser: true,
+				useUnifiedTopology: true,
 			})
 			.then(() => resolve('Connected to MongoDB!'))
 			.catch(error => reject(new Error(error)))
@@ -47,24 +48,64 @@ const deleteDoc = givenPath => {
 				const Model = mongoose.model(repoName, fileSchema)
 
 				// Find file doc by path
-				Model.findOne(
-					{
-						path: givenPath,
-					},
-					(error, file) => {
-						if (error) return reject(new Error(error))
+				const query = {
+					path: givenPath,
+				}
+				Model.findOne(query, (error, file) => {
+					if (error) return reject(new Error(error))
 
-						// Delete file doc using Id
-						return Model.findByIdAndDelete(file.id, error => {
+					// Delete file doc using Id
+					return Model.findByIdAndDelete(file.id, error => {
+						if (error) return reject(new Error(error))
+						return resolve(
+							`File ${path.basename(givenPath)} has been deleted!`
+						)
+					})
+				})
+			})
+			.catch(error => reject(new Error(error)))
+	})
+}
+
+const updateDoc = fields => {
+	return new Promise((resolve, reject) => {
+		// Connect to database
+		const dbName = getAppName(fields.path)
+		return connectToDB(dbName)
+			.then(() => {
+				const repoName = getRepoName(fields.path)
+
+				// Create Model
+				const Model = mongoose.model(repoName, fileSchema)
+
+				// Find file doc by path
+				const query = {
+					path: fields.path,
+				}
+				Model.findOne(query, (error, file) => {
+					if (error) return reject(new Error(error))
+					const data = {
+						...(fields.name && { name: fields.name }),
+						...(fields.path && { path: fields.path }),
+						...(fields.commit && {
+							commits: [fields.commit, ...file.commits],
+						}),
+						updatedAt: Date.now(),
+					}
+					return Model.findByIdAndUpdate(
+						file.id,
+						{ $set: data },
+						{ new: true },
+						error => {
 							if (error) return reject(new Error(error))
 							return resolve(
 								`File ${path.basename(
-									givenPath
-								)} has been deleted!`
+									fields.path
+								)} has been updated!`
 							)
-						})
-					}
-				)
+						}
+					)
+				})
 			})
 			.catch(error => reject(new Error(error)))
 	})
@@ -73,4 +114,5 @@ const deleteDoc = givenPath => {
 module.exports = {
 	createDoc,
 	deleteDoc,
+	updateDoc,
 }

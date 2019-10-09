@@ -170,7 +170,7 @@ const updateFile = async args => {
 			).catch(error => reject(new Error(error)))
 
 			// Commit the staged files
-			await git
+			return git
 				.commit({
 					dir: repoDir(givenPath),
 					author: {
@@ -183,10 +183,14 @@ const updateFile = async args => {
 					},
 					message: commitMessage,
 				})
-				.then(sha => console.log(sha))
-
-			// Resolve the promise
-			return resolve(`Updated: ${path.basename(givenPath)} file`)
+				.then(sha =>
+					database
+						.updateDoc({ commit: sha, path: givenPath })
+						.then(() =>
+							resolve(`Updated: ${path.basename(givenPath)} file`)
+						)
+						.catch(error => reject(new Error(error)))
+				)
 		})
 	})
 }
