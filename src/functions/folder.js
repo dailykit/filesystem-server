@@ -10,6 +10,8 @@ git.plugins.set('fs', fs)
 const files = require('./file')
 const getFolderSize = require('../utils/getFolderSize')
 
+const database = require('./database')
+
 const { getRelFilePath, repoDir } = require('../utils/parsePath')
 const { stageChanges } = require('./git')
 
@@ -117,9 +119,17 @@ const deleteFolder = givenPath => {
 						email: 'placeholder@example.com',
 					},
 					message: `Deleted: File ${path.basename(file)}`,
-				}).then(sha => console.log(sha))
+				}).then(sha =>
+					database
+						.deleteDoc(file)
+						.then(() =>
+							resolve(
+								`Deleted : ${path.basename(givenPath)} folder`
+							)
+						)
+						.catch(error => reject(new Error(error)))
+				)
 			}
-			return resolve(`Deleted : ${path.basename(givenPath)} folder`)
 		})
 	})
 }
