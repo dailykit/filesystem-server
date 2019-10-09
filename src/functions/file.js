@@ -69,19 +69,27 @@ const deleteFile = givenPath => {
 			).catch(error => reject(new Error(error)))
 
 			// Commit the deleted file
-			git.commit({
-				dir: repoDir(givenPath),
-				author: {
-					name: 'placeholder',
-					email: 'placeholder@example.com',
-				},
-				commiter: {
-					name: 'placeholder',
-					email: 'placeholder@example.com',
-				},
-				message: `Deleted: ${path.basename(givenPath)}`,
-			})
-			return resolve(`Deleted: ${path.basename(givenPath)}`)
+			return git
+				.commit({
+					dir: repoDir(givenPath),
+					author: {
+						name: 'placeholder',
+						email: 'placeholder@example.com',
+					},
+					commiter: {
+						name: 'placeholder',
+						email: 'placeholder@example.com',
+					},
+					message: `Deleted: ${path.basename(givenPath)}`,
+				})
+				.then(() =>
+					database
+						.deleteDoc(givenPath)
+						.then(() =>
+							resolve(`Deleted: ${path.basename(givenPath)}`)
+						)
+						.catch(error => reject(new Error(error)))
+				)
 		})
 	})
 }
