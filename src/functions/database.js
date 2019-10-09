@@ -11,6 +11,8 @@ const connectToDB = dbName => {
 			.connect(`mongodb://localhost:27017/${dbName}`, {
 				useNewUrlParser: true,
 				useUnifiedTopology: true,
+				useFindAndModify: false,
+				useCreateIndex: true,
 			})
 			.then(() => resolve('Connected to MongoDB!'))
 			.catch(error => reject(new Error(error)))
