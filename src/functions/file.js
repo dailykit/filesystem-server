@@ -223,7 +223,7 @@ const renameFile = async (oldPath, newPath) => {
 			).catch(error => reject(new Error(error)))
 
 			// Commit the staged files
-			await git
+			return git
 				.commit({
 					dir: repoDir(oldPath),
 					author: {
@@ -238,14 +238,18 @@ const renameFile = async (oldPath, newPath) => {
 						oldPath
 					)} file to ${path.basename(newPath)}`,
 				})
-				.then(sha => console.log(sha))
-
-			// Resolve the promise
-			return resolve(
-				`Renamed: ${path.basename(oldPath)} file to ${path.basename(
-					newPath
-				)}`
-			)
+				.then(sha =>
+					database
+						.updateDoc({ commit: sha, path: oldPath, newPath })
+						.then(() =>
+							resolve(
+								`Renamed: ${path.basename(
+									oldPath
+								)} file to ${path.basename(newPath)}`
+							)
+						)
+						.catch(error => reject(new Error(error)))
+				)
 		})
 	})
 }

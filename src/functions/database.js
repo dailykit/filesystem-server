@@ -87,8 +87,12 @@ const updateDoc = fields => {
 				Model.findOne(query, (error, file) => {
 					if (error) return reject(new Error(error))
 					const data = {
-						...(fields.name && { name: fields.name }),
-						...(fields.path && { path: fields.path }),
+						...(fields.newPath && {
+							name: path.basename(fields.newPath),
+						}),
+						...(fields.path && {
+							path: fields.newPath ? fields.newPath : fields.path,
+						}),
 						...(fields.commit && {
 							commits: [fields.commit, ...file.commits],
 						}),
@@ -102,7 +106,9 @@ const updateDoc = fields => {
 							if (error) return reject(new Error(error))
 							return resolve(
 								`File ${path.basename(
-									fields.path
+									fields.newPath
+										? fields.newPath
+										: fields.path
 								)} has been updated!`
 							)
 						}
