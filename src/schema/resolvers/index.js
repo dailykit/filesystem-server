@@ -96,39 +96,52 @@ const resolvers = {
 	Mutation: {
 		installApp: async (_, args) => {
 			const appPath = `./../apps/${args.name}`
-			const paths = [appPath, `${appPath}/data`, `${appPath}/schema`]
+			const dataFolders = []
+			const schemaFolders = []
 			const { schemas } = JSON.parse(args.schemas)
 
 			// Add Schema, Data Folder Paths
 			await schemas.map(folder => {
-				paths.push(`${appPath}/schema/${folder.path}`)
-				paths.push(`${appPath}/data/${folder.path}`)
+				schemaFolders.push(`${appPath}/schema/${folder.path}`)
+				dataFolders.push(`${appPath}/data/${folder.path}`)
 			})
 
+			// Create data folders and initialize git
+			await dataFolders.map(path =>
+				folders
+					.createFolder(path)
+					.then(() => git.init({ dir: path }))
+					.catch(error => reject(new Error(error)))
+			)
+
+			const folderPath = (folderName, folderPath) =>
+				`${appPath}/${folderName}/${folderPath}`
+
 			// Create Folders with Schema Entity Files
-			await paths.map(path =>
-				folders.createFolder(path).then(() =>
-					schemas.map(folder =>
-						folder.entities.map(file => {
-							const folderPath = folderName =>
-								`${appPath}/${folderName}/${folder.path}`
-							git.init({ dir: folderPath('data') })
-							const filepath = `${folderPath('schema')}/${
-								file.name
-							}.json`
-							if (fs.existsSync(folderPath)) {
+			await schemaFolders.map(path =>
+				folders
+					.createFolder(path)
+					.then(() => {
+						return schemas.map(folder => {
+							return folder.entities.map(file => {
+								const filepath = `${folderPath(
+									'schema',
+									folder.path
+								)}/${file.name}.json`
+
 								return fs.writeFile(
 									filepath,
 									JSON.stringify(file.content, null, 2),
 									err => {
-										if (err) return new Error(err)
+										if (err) return reject(new Error(err))
 									}
 								)
-							}
+							})
 						})
-					)
-				)
+					})
+					.catch(error => reject(new Error(error)))
 			)
+
 			return 'App installed!'
 		},
 		createFolder: (_, args) => {
