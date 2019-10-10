@@ -1,7 +1,6 @@
 const { gql } = require('apollo-server-express')
 
 const typeDefs = gql`
-	union FolderOrFile = Folder | File
 	type Folder {
 		name: String
 		path: String
@@ -54,6 +53,15 @@ const typeDefs = gql`
 		ingredients: [String]
 		recipes: [String]
 		dishes: [String]
+	}
+	union Result = Success | Error
+	type Success {
+		success: Boolean
+		message: String
+	}
+	type Error {
+		success: Boolean
+		error: String
 	}
 	type Query {
 		getFolderWithFiles(path: String): FolderWithFiles
