@@ -122,14 +122,10 @@ const deleteFolder = givenPath => {
 				}).then(sha =>
 					database
 						.deleteDoc(file)
-						.then(() =>
-							resolve(
-								`Deleted : ${path.basename(givenPath)} folder`
-							)
-						)
 						.catch(error => reject(new Error(error)))
 				)
 			}
+			resolve(`Deleted : ${path.basename(givenPath)} folder`)
 		})
 	})
 }
@@ -192,16 +188,14 @@ const renameFolder = (oldPath, newPath) => {
 								oldFilePaths[newFilePaths.indexOf(newFilePath)],
 							newPath: newFilePath,
 						})
-						.then(() =>
-							resolve(
-								`Renamed: From ${path.basename(
-									oldPath
-								)} to ${path.basename(newPath)}`
-							)
-						)
 						.catch(error => reject(new Error(error)))
 				)
 			}
+			resolve(
+				`Renamed: From ${path.basename(oldPath)} to ${path.basename(
+					newPath
+				)}`
+			)
 		})
 	})
 }
