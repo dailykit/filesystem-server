@@ -184,13 +184,24 @@ const renameFolder = (oldPath, newPath) => {
 					message: `Renamed: Parent folder from ${path.basename(
 						oldPath
 					)} to ${path.basename(newPath)}`,
-				}).then(sha => console.log(sha))
+				}).then(sha =>
+					database
+						.updateDoc({
+							commit: sha,
+							path:
+								oldFilePaths[newFilePaths.indexOf(newFilePath)],
+							newPath: newFilePath,
+						})
+						.then(() =>
+							resolve(
+								`Renamed: From ${path.basename(
+									oldPath
+								)} to ${path.basename(newPath)}`
+							)
+						)
+						.catch(error => reject(new Error(error)))
+				)
 			}
-			resolve(
-				`Renamed: From ${path.basename(oldPath)} to ${path.basename(
-					newPath
-				)}`
-			)
 		})
 	})
 }
