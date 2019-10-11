@@ -19,9 +19,9 @@ const gitCommit = (givenPath) => {
 
 const cherrypickForValidatedBranches = (validFor, sha, givenPath) => {
     validFor.forEach(branch => {
-        branchCheckout.checkoutBranch(branch)
+        branchCheckout.checkoutBranch(branch, givenPath)
         .then(() =>{
-            cherryPick.cherryPickCommit(sha)
+            cherryPick.cherryPickCommit(sha, givenPath)
             .then(()=>{
                 gitCommit(givenPath)
             })

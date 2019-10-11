@@ -187,8 +187,9 @@ const updateFile = async args => {
 				})
 				.then(sha => {
 					branching.cherrypickForValidatedBranches(validatedFor, sha, givenPath);
-					return sha;
+					
 				})
+
 				.then(sha =>
 					database
 						.updateDoc({ commit: sha, path: givenPath })
