@@ -1,14 +1,14 @@
 const fs = require('fs')
 const path = require('path')
 const getFilesRecursively = require('recursive-readdir')
-
+const branching = require('../branching/index.js')
 const git = require('isomorphic-git')
 git.plugins.set('fs', fs)
 
 const database = require('./database')
 
 const { getRelFilePath, repoDir } = require('../utils/parsePath')
-const { stageChanges } = require('./git')
+const { stageChanges, gitCommit } = require('./git')
 
 const createFile = ({ path: givenPath, content }) => {
 	return new Promise((resolve, reject) => {
@@ -16,7 +16,6 @@ const createFile = ({ path: givenPath, content }) => {
 		if (!fs.existsSync(path.dirname(givenPath))) {
 			fs.mkdirSync(path.dirname(givenPath), { recursive: true })
 		}
-
 		// Create the file
 		fs.writeFileSync(givenPath, JSON.stringify(content, null, 2))
 
@@ -24,7 +23,7 @@ const createFile = ({ path: givenPath, content }) => {
 		stageChanges('add', repoDir(givenPath), getRelFilePath(givenPath))
 			.then(result => console.log(result))
 			.catch(error => reject(new Error(error)))
-
+		console.log(givenPath, content)
 		// Commit the file
 		return git
 			.commit({
@@ -39,7 +38,10 @@ const createFile = ({ path: givenPath, content }) => {
 				},
 				message: `Added: ${path.basename(givenPath)}`,
 			})
+		// console.log(gitCommit(givenPath))
+		
 			.then(sha => {
+				console.log(sha)
 				const fields = {
 					name: path.basename(givenPath),
 					path: givenPath,
@@ -183,6 +185,11 @@ const updateFile = async args => {
 					},
 					message: commitMessage,
 				})
+				.then(sha => {
+					branching.cherrypickForValidatedBranches(validatedFor, sha, givenPath);
+					
+				})
+
 				.then(sha =>
 					database
 						.updateDoc({ commit: sha, path: givenPath })

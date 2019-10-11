@@ -99,7 +99,7 @@ const resolvers = {
 			const dataFolders = []
 			const schemaFolders = []
 			const { schemas } = JSON.parse(args.schemas)
-
+			console.log({appPath})
 			// Add Schema, Data Folder Paths
 			await schemas.map(folder => {
 				schemaFolders.push(`${appPath}/schema/${folder.path}`)
@@ -117,6 +117,8 @@ const resolvers = {
 					}))
 			)
 
+			console.log(process.env)
+
 			const folderPath = (folderName, folderPath) =>
 				`${appPath}/${folderName}/${folderPath}`
 
@@ -131,12 +133,12 @@ const resolvers = {
 									'schema',
 									folder.path
 								)}/${file.name}.json`
-
+									console.log({filepath})
 								return fs.writeFile(
 									filepath,
 									JSON.stringify(file.content, null, 2),
-									err => {
-										if (err)
+									error => {
+										if (error)
 											return {
 												success: false,
 												error: new Error(error),
@@ -151,7 +153,6 @@ const resolvers = {
 						error: new Error(error),
 					}))
 			)
-
 			return {
 				success: true,
 				message: `App ${args.name} is installed!`,
