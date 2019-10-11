@@ -98,7 +98,6 @@ const updateDoc = fields => {
 						}),
 						updatedAt: Date.now(),
 					}
-					console.log(data)
 					return Model.findByIdAndUpdate(
 						file.id,
 						{ $set: data },

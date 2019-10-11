@@ -137,13 +137,12 @@ const resolvers = {
 								return fs.writeFile(
 									filepath,
 									JSON.stringify(file.content, null, 2),
-									err => {
-										if (err)
+									error => {
+										if (error)
 											return {
 												success: false,
 												error: new Error(error),
 											}
-										
 									}
 								)
 							})

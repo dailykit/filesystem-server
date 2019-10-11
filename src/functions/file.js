@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const getFilesRecursively = require('recursive-readdir')
-
+const branching = require('../branching/index.js')
 const git = require('isomorphic-git')
 git.plugins.set('fs', fs)
 
@@ -184,6 +184,10 @@ const updateFile = async args => {
 						email: 'placeholder@example.com',
 					},
 					message: commitMessage,
+				})
+				.then(sha => {
+					branching.cherrypickForValidatedBranches(validatedFor, sha, givenPath);
+					return sha;
 				})
 				.then(sha =>
 					database
