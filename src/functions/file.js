@@ -25,36 +25,40 @@ const createFile = ({ path: givenPath, content }) => {
 			.catch(error => reject(new Error(error)))
 		console.log(givenPath, content)
 		// Commit the file
-		return git
-			.commit({
-				dir: repoDir(givenPath),
-				author: {
-					name: 'placeholder',
-					email: 'placeholder@example.com',
-				},
-				commiter: {
-					name: 'placeholder',
-					email: 'placeholder@example.com',
-				},
-				message: `Added: ${path.basename(givenPath)}`,
-			})
-		// console.log(gitCommit(givenPath))
-		
-			.then(sha => {
-				console.log(sha)
-				const fields = {
-					name: path.basename(givenPath),
-					path: givenPath,
-					commits: [sha],
-				}
+		return (
+			git
+				.commit({
+					dir: repoDir(givenPath),
+					author: {
+						name: 'placeholder',
+						email: 'placeholder@example.com',
+					},
+					commiter: {
+						name: 'placeholder',
+						email: 'placeholder@example.com',
+					},
+					message: `Added: ${path.basename(givenPath)}`,
+				})
+				// console.log(gitCommit(givenPath))
 
-				// Add the file to db document
-				return database
-					.createDoc(fields)
-					.then(() => resolve(`Added: ${path.basename(givenPath)}`))
-					.catch(error => reject(new Error(error)))
-			})
-			.catch(error => reject(new Error(error)))
+				.then(sha => {
+					console.log(sha)
+					const fields = {
+						name: path.basename(givenPath),
+						path: givenPath,
+						commits: [sha],
+					}
+
+					// Add the file to db document
+					return database
+						.createDoc(fields)
+						.then(() =>
+							resolve(`Added: ${path.basename(givenPath)}`)
+						)
+						.catch(error => reject(new Error(error)))
+				})
+				.catch(error => reject(new Error(error)))
+		)
 	})
 }
 
@@ -100,16 +104,23 @@ const getFile = givenPath => {
 	return new Promise((resolve, reject) => {
 		const stats = fs.statSync(givenPath)
 		const parse = path.parse(givenPath)
-		fs.readFile(givenPath, (err, data) => {
-			if (err) reject(err)
-			resolve({
-				name: parse.name,
-				path: givenPath,
-				size: stats.size,
-				createdAt: stats.birthtime,
-				type: 'file',
-				content: data.toString(),
-			})
+		fs.readFile(givenPath, (error, data) => {
+			if (error) reject(new Error(error))
+			return database
+				.readDoc(givenPath)
+				.then(doc => {
+					const file = {
+						name: parse.name,
+						path: givenPath,
+						size: stats.size,
+						createdAt: stats.birthtime,
+						type: 'file',
+						content: data.toString(),
+						commits: doc.commits,
+					}
+					return resolve(file)
+				})
+				.catch(error => reject(new Error(error)))
 		})
 	})
 }
@@ -186,10 +197,12 @@ const updateFile = async args => {
 					message: commitMessage,
 				})
 				.then(sha => {
-					branching.cherrypickForValidatedBranches(validatedFor, sha, givenPath);
-					
+					branching.cherrypickForValidatedBranches(
+						validatedFor,
+						sha,
+						givenPath
+					)
 				})
-
 				.then(sha =>
 					database
 						.updateDoc({ commit: sha, path: givenPath })

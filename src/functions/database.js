@@ -119,8 +119,33 @@ const updateDoc = fields => {
 	})
 }
 
+const readDoc = path => {
+	return new Promise((resolve, reject) => {
+		// Connect to database
+		const dbName = getAppName(path)
+		return connectToDB(dbName)
+			.then(() => {
+				const repoName = getRepoName(path)
+
+				// Create Model
+				const Model = mongoose.model(repoName, fileSchema)
+
+				// Find file doc by path
+				const query = {
+					path: path,
+				}
+				Model.findOne(query, (error, file) => {
+					if (error) return reject(new Error(error))
+					return resolve(file)
+				})
+			})
+			.catch(error => reject(new Error(error)))
+	})
+}
+
 module.exports = {
 	createDoc,
 	deleteDoc,
 	updateDoc,
+	readDoc,
 }

@@ -25,6 +25,7 @@ const typeDefs = gql`
 		content: String
 		size: Int
 		createdAt: String
+		commits: [String]
 	}
 
 	type Author {
