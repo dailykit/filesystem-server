@@ -1,37 +1,24 @@
-import branchCheckout from "./branchCheckout";
-import cherryPick from "./cherrypick"
-const gitCommit = (givenPath) => {
-    git
-    .commit({
-        dir: repoDir(givenPath),
-        author: {
-            name: 'placeholder',
-            email: 'placeholder@example.com',
-        },
-        commiter: {
-            name: 'placeholder',
-            email: 'placeholder@example.com',
-        },
-        message: `Cherrypicked: ${path.basename(givenPath)}`,
-    })
-    .then(data => console.log("printing" + data))
-}
+const branchCheckout = require('./branchCheckout')
+const cherryPick = require('./cherrypick')
+const path = require('path')
+
+const { gitCommit } = require('../functions/git')
 
 const cherrypickForValidatedBranches = (validFor, sha, givenPath) => {
-    validFor.forEach(branch => {
-        branchCheckout.checkoutBranch(branch, givenPath)
-        .then(() =>{
-            cherryPick.cherryPickCommit(sha, givenPath)
-            .then(()=>{
-                gitCommit(givenPath)
-            })
-        })
-        
-
-    })
+	validFor.forEach(branch => {
+		branchCheckout.checkoutBranch(branch, givenPath).then(() => {
+			cherryPick.cherryPickCommit(sha, givenPath).then(() => {
+				gitCommit(
+					givenPath,
+					{ name: 'placeholder', email: 'placeholder@example.com' },
+					{ name: 'placeholder', email: 'placeholder@example.com' },
+					`Added: ${path.basename(givenPath)} to branch ${branch}`
+				)
+			})
+		})
+	})
 }
 
 module.exports = {
-gitCommit,
-cherrypickForValidatedBranches
+	cherrypickForValidatedBranches,
 }

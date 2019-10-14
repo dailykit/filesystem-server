@@ -1,8 +1,8 @@
 const fs = require('fs')
 const git = require('isomorphic-git')
 git.plugins.set('fs', fs)
-const { getRelFilePath, repoDir } = require('../utils/parsePath')
 
+const { repoDir } = require('../utils/parsePath')
 
 const stageChanges = (type, dir, filepath) => {
 	return new Promise((resolve, reject) => {
@@ -22,24 +22,17 @@ const stageChanges = (type, dir, filepath) => {
 	})
 }
 
-
-const gitCommit = (givenPath) => {
-			git
-			.commit({
-				dir: repoDir(givenPath),
-				author: {
-					name: 'placeholder',
-					email: 'placeholder@example.com',
-				},
-				commiter: {
-					name: 'placeholder',
-					email: 'placeholder@example.com',
-				},
-				message: `Added: ${path.basename(givenPath)}`,
-			})
-			.then(data => console.log("printing" + data))
+const gitCommit = (givenPath, author, committer, message) => {
+	return git
+		.commit({
+			dir: repoDir(givenPath),
+			author: author,
+			commiter: committer,
+			message: message,
+		})
+		.then(sha => sha)
 }
 module.exports = {
 	stageChanges,
-	gitCommit
+	gitCommit,
 }
