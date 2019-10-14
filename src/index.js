@@ -17,7 +17,7 @@ const apolloserver = new ApolloServer({
 		}${PORT}/graphql`,
 	},
 	introspection: process.env.NODE_ENV === 'production' ? false : true,
-	validationRules: [depthLimit(5)],
+	validationRules: [depthLimit(11)],
 	formatError: err => {
 		if (err.message.includes('ENOENT'))
 			return new Error('No such folder or file exists!')
