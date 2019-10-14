@@ -1,14 +1,13 @@
 const fs = require('fs')
 const path = require('path')
 const getFilesRecursively = require('recursive-readdir')
-const branching = require('../branching/index.js')
 const git = require('isomorphic-git')
 git.plugins.set('fs', fs)
 
 const database = require('./database')
 
 const { getRelFilePath, repoDir } = require('../utils/parsePath')
-const { stageChanges, gitCommit } = require('./git')
+const { stageChanges, commitToBranch, gitCommit } = require('./git')
 
 const createFile = ({ path: givenPath, content }) => {
 	return new Promise((resolve, reject) => {
@@ -20,45 +19,39 @@ const createFile = ({ path: givenPath, content }) => {
 		fs.writeFileSync(givenPath, JSON.stringify(content, null, 2))
 
 		// Stage the file
-		stageChanges('add', repoDir(givenPath), getRelFilePath(givenPath))
-			.then(result => console.log(result))
-			.catch(error => reject(new Error(error)))
-		console.log(givenPath, content)
+		stageChanges(
+			'add',
+			repoDir(givenPath),
+			getRelFilePath(givenPath)
+		).catch(error => reject(new Error(error)))
+
 		// Commit the file
-		return (
-			git
-				.commit({
-					dir: repoDir(givenPath),
-					author: {
-						name: 'placeholder',
-						email: 'placeholder@example.com',
-					},
-					commiter: {
-						name: 'placeholder',
-						email: 'placeholder@example.com',
-					},
-					message: `Added: ${path.basename(givenPath)}`,
-				})
-				// console.log(gitCommit(givenPath))
-
-				.then(sha => {
-					console.log(sha)
-					const fields = {
-						name: path.basename(givenPath),
-						path: givenPath,
-						commits: [sha],
-					}
-
-					// Add the file to db document
-					return database
-						.createDoc(fields)
-						.then(() =>
-							resolve(`Added: ${path.basename(givenPath)}`)
-						)
-						.catch(error => reject(new Error(error)))
-				})
-				.catch(error => reject(new Error(error)))
+		return gitCommit(
+			givenPath,
+			{
+				name: 'placeholder',
+				email: 'placeholder@example.com',
+			},
+			{
+				name: 'placeholder',
+				email: 'placeholder@example.com',
+			},
+			`Added: ${path.basename(givenPath)}`
 		)
+			.then(sha => {
+				const fields = {
+					name: path.basename(givenPath),
+					path: givenPath,
+					commits: [sha],
+				}
+
+				// Add the file to db document
+				return database
+					.createDoc(fields)
+					.then(() => resolve(`Added: ${path.basename(givenPath)}`))
+					.catch(error => reject(new Error(error)))
+			})
+			.catch(error => reject(new Error(error)))
 	})
 }
 
@@ -75,27 +68,23 @@ const deleteFile = givenPath => {
 			).catch(error => reject(new Error(error)))
 
 			// Commit the deleted file
-			return git
-				.commit({
-					dir: repoDir(givenPath),
-					author: {
-						name: 'placeholder',
-						email: 'placeholder@example.com',
-					},
-					commiter: {
-						name: 'placeholder',
-						email: 'placeholder@example.com',
-					},
-					message: `Deleted: ${path.basename(givenPath)}`,
-				})
-				.then(() =>
-					database
-						.deleteDoc(givenPath)
-						.then(() =>
-							resolve(`Deleted: ${path.basename(givenPath)}`)
-						)
-						.catch(error => reject(new Error(error)))
-				)
+			return gitCommit(
+				givenPath,
+				{
+					name: 'placeholder',
+					email: 'placeholder@example.com',
+				},
+				{
+					name: 'placeholder',
+					email: 'placeholder@example.com',
+				},
+				`Deleted: ${path.basename(givenPath)}`
+			).then(() =>
+				database
+					.deleteDoc(givenPath)
+					.then(() => resolve(`Deleted: ${path.basename(givenPath)}`))
+					.catch(error => reject(new Error(error)))
+			)
 		})
 	})
 }
@@ -183,24 +172,31 @@ const updateFile = async args => {
 			).catch(error => reject(new Error(error)))
 
 			// Commit the staged files
-			return git
-				.commit({
-					dir: repoDir(givenPath),
-					author: {
-						name: 'placeholder',
-						email: 'placeholder@example.com',
-					},
-					commiter: {
-						name: 'placeholder',
-						email: 'placeholder@example.com',
-					},
-					message: commitMessage,
-				})
+			return gitCommit(
+				givenPath,
+				{
+					name: 'placeholder',
+					email: 'placeholder@example.com',
+				},
+				{
+					name: 'placeholder',
+					email: 'placeholder@example.com',
+				},
+				commitMessage
+			)
 				.then(sha => {
-					branching.cherrypickForValidatedBranches(
+					commitToBranch(
 						validatedFor,
 						sha,
-						givenPath
+						givenPath,
+						{
+							name: 'placeholder',
+							email: 'placeholder@example.com',
+						},
+						{
+							name: 'placeholder',
+							email: 'placeholder@example.com',
+						}
 					)
 				})
 				.then(sha =>
@@ -243,33 +239,31 @@ const renameFile = async (oldPath, newPath) => {
 			).catch(error => reject(new Error(error)))
 
 			// Commit the staged files
-			return git
-				.commit({
-					dir: repoDir(oldPath),
-					author: {
-						name: 'placeholder',
-						email: 'placeholder@example.com',
-					},
-					commiter: {
-						name: 'placeholder',
-						email: 'placeholder@example.com',
-					},
-					message: `Renamed: ${path.basename(
-						oldPath
-					)} file to ${path.basename(newPath)}`,
-				})
-				.then(sha =>
-					database
-						.updateDoc({ commit: sha, path: oldPath, newPath })
-						.then(() =>
-							resolve(
-								`Renamed: ${path.basename(
-									oldPath
-								)} file to ${path.basename(newPath)}`
-							)
+			return gitCommit(
+				oldPath,
+				{
+					name: 'placeholder',
+					email: 'placeholder@example.com',
+				},
+				{
+					name: 'placeholder',
+					email: 'placeholder@example.com',
+				},
+				`Renamed: ${path.basename(oldPath)} file to ${path.basename(
+					newPath
+				)}`
+			).then(sha =>
+				database
+					.updateDoc({ commit: sha, path: oldPath, newPath })
+					.then(() =>
+						resolve(
+							`Renamed: ${path.basename(
+								oldPath
+							)} file to ${path.basename(newPath)}`
 						)
-						.catch(error => reject(new Error(error)))
-				)
+					)
+					.catch(error => reject(new Error(error)))
+			)
 		})
 	})
 }

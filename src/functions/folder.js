@@ -15,8 +15,6 @@ const database = require('./database')
 const { getRelFilePath, repoDir } = require('../utils/parsePath')
 const { stageChanges } = require('./git')
 
-const baseFolder = './../apps/'
-
 const getNestedFolders = async url => {
 	let content = await fs.readdirSync(url)
 	let folders = content.filter(
