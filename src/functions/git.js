@@ -7,7 +7,7 @@ const { CherrypickOptions, MergeOptions } = require('nodegit')
 
 git.plugins.set('fs', fs)
 
-const { repoDir } = require('../utils/parsePath')
+const { repoDir, getRelFilePath } = require('../utils/parsePath')
 
 const stageChanges = (type, dir, filepath) => {
 	return new Promise((resolve, reject) => {
@@ -61,30 +61,42 @@ const cherryPickCommit = (sha, givenPath) => {
 	})
 }
 
-const commitToBranch = (validFor, sha, givenPath, author, committer) => {
+const checkoutBranch = (branch, givenPath) => {
 	return new Promise((resolve, reject) => {
-		validFor.forEach(async branch => {
-			await git.checkout({
-				dir: repoDir(givenPath),
-				ref: branch,
-			})
-			cherryPickCommit(sha, givenPath)
-				.then(() => {
-					gitCommit(
-						givenPath,
-						author,
-						committer,
-						`Updated: ${path.basename(
-							givenPath
-						)} file in branch ${branch}...`
-					)
-					git.checkout({
-						dir: repoDir(givenPath),
-						ref: 'master',
+		nodegit.Repository.open(repoDir(givenPath))
+			.then(repo => {
+				return repo
+					.checkoutBranch(branch, {
+						checkoutStrategy: nodegit.Checkout.STRATEGY.FORCE,
 					})
-					resolve()
+					.then(() => {
+						resolve()
+					})
+			})
+			.catch(error => reject(new Error(error)))
+	})
+}
+
+const commitToBranch = (validFor, sha, givenPath, author, committer) => {
+	validFor.forEach(branch => {
+		checkoutBranch(branch, givenPath).then(() => {
+			cherryPickCommit(sha, givenPath).then(() => {
+				stageChanges(
+					'add',
+					repoDir(givenPath),
+					getRelFilePath(givenPath)
+				)
+				gitCommit(
+					givenPath,
+					author,
+					committer,
+					`Updated: ${path.basename(
+						givenPath
+					)} file in branch ${branch}...`
+				).then(() => {
+					checkoutBranch('master', givenPath)
 				})
-				.catch(e => reject(new Error(e)))
+			})
 		})
 	})
 }

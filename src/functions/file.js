@@ -172,7 +172,7 @@ const updateFile = async args => {
 				},
 				commitMessage
 			).then(async sha => {
-				await database
+				const dbOp = await database
 					.updateFile({ commit: sha, path: givenPath })
 					.catch(error => reject(new Error(error)))
 				const author = {
@@ -183,13 +183,14 @@ const updateFile = async args => {
 					name: 'placeholder',
 					email: 'placeholder@example.com',
 				}
-				await commitToBranch(
+				const branchOp = await commitToBranch(
 					validatedFor,
 					sha,
 					givenPath,
 					author,
 					committer
-				)
+				).catch(error => reject(new Error(error)))
+				return Promise.all([dbOp, branchOp])
 					.then(() =>
 						resolve(`Updated: ${path.basename(givenPath)} file`)
 					)
