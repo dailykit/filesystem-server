@@ -78,26 +78,33 @@ const checkoutBranch = (branch, givenPath) => {
 }
 
 const commitToBranch = (validFor, sha, givenPath, author, committer) => {
-	validFor.forEach(branch => {
-		checkoutBranch(branch, givenPath).then(() => {
-			cherryPickCommit(sha, givenPath).then(() => {
-				stageChanges(
-					'add',
-					repoDir(givenPath),
-					getRelFilePath(givenPath)
-				)
-				gitCommit(
-					givenPath,
-					author,
-					committer,
-					`Updated: ${path.basename(
-						givenPath
-					)} file in branch ${branch}...`
-				).then(() => {
-					checkoutBranch('master', givenPath)
+	return new Promise((resolve, reject) => {
+		validFor.forEach(branch => {
+			checkoutBranch(branch, givenPath)
+				.then(() => {
+					cherryPickCommit(sha, givenPath)
+						.then(async () => {
+							await stageChanges(
+								'add',
+								repoDir(givenPath),
+								getRelFilePath(givenPath)
+							)
+							await gitCommit(
+								givenPath,
+								author,
+								committer,
+								`Updated: ${path.basename(givenPath)} file`
+							).then(() => {
+								checkoutBranch('master', givenPath).catch(
+									error => reject(new Error(error))
+								)
+							})
+						})
+						.catch(error => reject(new Error(error)))
 				})
-			})
+				.catch(error => reject(new Error(error)))
 		})
+		return resolve()
 	})
 }
 

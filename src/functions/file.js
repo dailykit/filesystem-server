@@ -183,14 +183,23 @@ const updateFile = async args => {
 					name: 'placeholder',
 					email: 'placeholder@example.com',
 				}
-				const branchOp = await commitToBranch(
-					validatedFor,
-					sha,
-					givenPath,
-					author,
-					committer
-				).catch(error => reject(new Error(error)))
-				return Promise.all([dbOp, branchOp])
+				let branchOp = null
+				if (validatedFor.length > 0) {
+					branchOp = await commitToBranch(
+						validatedFor,
+						sha,
+						givenPath,
+						author,
+						committer
+					).catch(error => reject(new Error(error)))
+				}
+
+				const promises = [dbOp]
+				if (validatedFor.length > 0) {
+					promises.push(branchOp)
+				}
+
+				return Promise.all(promises)
 					.then(() =>
 						resolve(`Updated: ${path.basename(givenPath)} file`)
 					)
