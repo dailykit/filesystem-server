@@ -11,7 +11,7 @@
     "graphql-tools": "^4.0.5",
     "isomorphic-git": "^0.67.2",
     "lodash": "^4.17.15",
-    "mongoose": "^5.7.3",
+    "mongoose": "^5.7.5",
     "nodegit": "^0.26.2",
     "recursive-readdir": "^2.2.2",
     "rimraf": "^3.0.0"
