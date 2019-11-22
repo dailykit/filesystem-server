@@ -84,21 +84,24 @@ const commitToBranch = (validFor, sha, givenPath, author, committer) => {
 				.then(() => {
 					cherryPickCommit(sha, givenPath)
 						.then(async () => {
-							await stageChanges(
-								'add',
-								repoDir(givenPath),
-								getRelFilePath(givenPath)
-							)
-							await gitCommit(
-								givenPath,
-								author,
-								committer,
-								`Updated: ${path.basename(givenPath)} file`
-							).then(() => {
-								checkoutBranch('master', givenPath).catch(
+							try {
+								await stageChanges(
+									'add',
+									repoDir(givenPath),
+									getRelFilePath(givenPath)
+								).catch(error => reject(new Error(error)))
+								await gitCommit(
+									givenPath,
+									author,
+									committer,
+									`Updated: ${path.basename(givenPath)} file`
+								)
+								await checkoutBranch('master', givenPath).catch(
 									error => reject(new Error(error))
 								)
-							})
+							} catch (error) {
+								return reject(new Error(error))
+							}
 						})
 						.catch(error => reject(new Error(error)))
 				})
