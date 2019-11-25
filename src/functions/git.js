@@ -54,10 +54,10 @@ const cherryPickCommit = (sha, givenPath) => {
 						cherrypickOptions
 					)
 						.then(int => resolve())
-						.catch(error => reject(new Error(error)))
+						.catch(error => reject(error))
 				})
 			})
-			.catch(error => reject(new Error(error)))
+			.catch(error => reject(error))
 	})
 }
 
@@ -72,9 +72,9 @@ const checkoutBranch = (branch, givenPath) => {
 					.then(() => {
 						resolve()
 					})
-					.catch(error => reject(new Error(error)))
+					.catch(error => reject(error))
 			})
-			.catch(error => reject(new Error(error)))
+			.catch(error => reject(error))
 	})
 }
 
@@ -87,11 +87,13 @@ const commitToBranch = async (
 	commitMessage
 ) => {
 	try {
+		await checkoutBranch('master', givenPath)
 		await checkoutBranch(branch, givenPath)
 		await cherryPickCommit(sha, givenPath)
 		await stageChanges('add', repoDir(givenPath), getRelFilePath(givenPath))
 		await gitCommit(givenPath, author, committer, commitMessage)
 		await checkoutBranch('master', givenPath)
+		return `Updated ${path.basename(givenPath)} in branch ${branch}`
 	} catch (error) {
 		return new Error(error)
 	}

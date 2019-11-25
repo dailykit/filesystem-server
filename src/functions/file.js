@@ -147,7 +147,7 @@ const searchFiles = async fileName => {
 }
 
 const updateFile = async args => {
-	const { path: givenPath, data, commitMessage, validatedFor } = args
+	const { path: givenPath, data, commitMessage } = args
 	return new Promise((resolve, reject) => {
 		fs.writeFile(givenPath, data, async err => {
 			if (err) return reject(new Error(err))
@@ -169,28 +169,15 @@ const updateFile = async args => {
 					name: 'placeholder',
 					email: 'placeholder@example.com',
 				}
-				let commitId = ''
-				await gitCommit(
+				const sha = await gitCommit(
 					givenPath,
 					author,
 					committer,
 					commitMessage
-				).then(sha => {
-					commitId = sha
-				})
+				)
 				await database.updateFile({
-					commit: commitId,
+					commit: sha,
 					path: givenPath,
-				})
-				await validatedFor.map(branch => {
-					commitToBranch(
-						branch,
-						commitId,
-						givenPath,
-						author,
-						committer,
-						commitMessage
-					)
 				})
 				resolve(`Updated: ${path.basename(givenPath)} file`)
 			} catch (error) {
@@ -198,6 +185,36 @@ const updateFile = async args => {
 			}
 		})
 	})
+}
+
+const updateFileInBranch = async ({ path: givenPath, branch }) => {
+	try {
+		const file = await database.readFile(givenPath)
+		const { object } = await git.readObject({
+			dir: repoDir(givenPath),
+			oid: file.commits[0],
+		})
+		const author = {
+			name: 'placeholder',
+			email: 'placeholder@example.com',
+		}
+		const committer = {
+			name: 'placeholder',
+			email: 'placeholder@example.com',
+		}
+		const result = await commitToBranch(
+			branch,
+			file.commits[0],
+			givenPath,
+			author,
+			committer,
+			object.message
+		)
+		return result
+	} catch (error) {
+		console.log(error)
+		return new Error(error)
+	}
 }
 
 const draftFile = async args => {
@@ -331,6 +348,7 @@ module.exports = {
 	deleteFile,
 	getFile,
 	updateFile,
+	updateFileInBranch,
 	renameFile,
 	searchFiles,
 	draftFile,

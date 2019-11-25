@@ -348,6 +348,24 @@ const resolvers = {
 				error: `File ${path.basename(args.path)} doesn't exists!`,
 			}
 		},
+		updateFileInBranch: async (_, args) => {
+			if (fs.existsSync(args.path)) {
+				return files
+					.updateFileInBranch(args)
+					.then(response => ({
+						success: true,
+						message: response,
+					}))
+					.catch(failure => ({
+						success: false,
+						error: new Error(failure),
+					}))
+			}
+			return {
+				success: false,
+				error: `File ${path.basename(args.path)} doesn't exists!`,
+			}
+		},
 		draftFile: async (_, args) => {
 			if (fs.existsSync(args.path)) {
 				return files
