@@ -72,43 +72,29 @@ const checkoutBranch = (branch, givenPath) => {
 					.then(() => {
 						resolve()
 					})
+					.catch(error => reject(new Error(error)))
 			})
 			.catch(error => reject(new Error(error)))
 	})
 }
 
-const commitToBranch = (validFor, sha, givenPath, author, committer) => {
-	return new Promise((resolve, reject) => {
-		validFor.forEach(branch => {
-			checkoutBranch(branch, givenPath)
-				.then(() => {
-					cherryPickCommit(sha, givenPath)
-						.then(async () => {
-							try {
-								await stageChanges(
-									'add',
-									repoDir(givenPath),
-									getRelFilePath(givenPath)
-								).catch(error => reject(new Error(error)))
-								await gitCommit(
-									givenPath,
-									author,
-									committer,
-									`Updated: ${path.basename(givenPath)} file`
-								)
-								await checkoutBranch('master', givenPath).catch(
-									error => reject(new Error(error))
-								)
-							} catch (error) {
-								return reject(new Error(error))
-							}
-						})
-						.catch(error => reject(new Error(error)))
-				})
-				.catch(error => reject(new Error(error)))
-		})
-		return resolve()
-	})
+const commitToBranch = async (
+	branch,
+	sha,
+	givenPath,
+	author,
+	committer,
+	commitMessage
+) => {
+	try {
+		await checkoutBranch(branch, givenPath)
+		await cherryPickCommit(sha, givenPath)
+		await stageChanges('add', repoDir(givenPath), getRelFilePath(givenPath))
+		await gitCommit(givenPath, author, committer, commitMessage)
+		await checkoutBranch('master', givenPath)
+	} catch (error) {
+		return new Error(error)
+	}
 }
 
 const createBranch = async (repo, name, author) => {

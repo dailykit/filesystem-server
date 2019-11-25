@@ -152,29 +152,15 @@ const updateFile = async args => {
 		fs.writeFile(givenPath, data, async err => {
 			if (err) return reject(new Error(err))
 
-			// Add the updated file to staging
-			await stageChanges(
-				'add',
-				repoDir(givenPath),
-				getRelFilePath(givenPath)
-			).catch(error => reject(new Error(error)))
+			try {
+				// Add the updated file to staging
+				await stageChanges(
+					'add',
+					repoDir(givenPath),
+					getRelFilePath(givenPath)
+				)
 
-			// Commit the staged files
-			return gitCommit(
-				givenPath,
-				{
-					name: 'placeholder',
-					email: 'placeholder@example.com',
-				},
-				{
-					name: 'placeholder',
-					email: 'placeholder@example.com',
-				},
-				commitMessage
-			).then(async sha => {
-				const dbOp = await database
-					.updateFile({ commit: sha, path: givenPath })
-					.catch(error => reject(new Error(error)))
+				// Commit the staged files
 				const author = {
 					name: 'placeholder',
 					email: 'placeholder@example.com',
@@ -183,28 +169,33 @@ const updateFile = async args => {
 					name: 'placeholder',
 					email: 'placeholder@example.com',
 				}
-				let branchOp = null
-				if (validatedFor.length > 0) {
-					branchOp = await commitToBranch(
-						validatedFor,
-						sha,
+				let commitId = ''
+				await gitCommit(
+					givenPath,
+					author,
+					committer,
+					commitMessage
+				).then(sha => {
+					commitId = sha
+				})
+				await database.updateFile({
+					commit: commitId,
+					path: givenPath,
+				})
+				await validatedFor.map(branch => {
+					commitToBranch(
+						branch,
+						commitId,
 						givenPath,
 						author,
-						committer
-					).catch(error => reject(new Error(error)))
-				}
-
-				const promises = [dbOp]
-				if (validatedFor.length > 0) {
-					promises.push(branchOp)
-				}
-
-				return Promise.all(promises)
-					.then(() =>
-						resolve(`Updated: ${path.basename(givenPath)} file`)
+						committer,
+						commitMessage
 					)
-					.catch(error => reject(new Error(error)))
-			})
+				})
+				resolve(`Updated: ${path.basename(givenPath)} file`)
+			} catch (error) {
+				reject(new Error(error))
+			}
 		})
 	})
 }
