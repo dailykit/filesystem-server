@@ -12,7 +12,7 @@
     "graphql-subscriptions": "^1.1.0",
     "graphql-tools": "^4.0.6",
     "isomorphic-git": "0.75.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "mongoose": "^5.7.12",
     "rimraf": "^3.0.0"
   },
